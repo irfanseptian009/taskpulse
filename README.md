@@ -1,116 +1,147 @@
-# TaskPulse – Discord Webhook Task Scheduler
+# TaskPulse
 
-TaskPulse is a full-stack web application that allows users to create, manage, and monitor scheduled tasks. Each task executes on a defined cron schedule and sends a payload to a Discord Webhook.
+TaskPulse adalah platform full-stack untuk menjadwalkan pengiriman payload ke Discord Webhook menggunakan cron expression, dilengkapi autentikasi, dashboard, log eksekusi, pengaturan user, dan manajemen notifikasi.
 
-## Architecture & Tech Stack
+## Ringkasan Arsitektur
 
-- **Frontend**: Next.js (App Router), TypeScript, TailwindCSS, shadcn/ui, React Query, Axios.
-- **Backend**: NestJS, TypeScript, node-cron.
-- **Database**: PostgreSQL (Supabase), Prisma ORM.
-- **Infrastructure**: Docker, Docker Compose.
+- Frontend: Next.js App Router + React 19 + TypeScript
+- Backend: NestJS + Prisma + PostgreSQL
+- Scheduler: `node-cron` (registrasi job aktif saat startup)
+- Delivery engine: Axios + retry exponential backoff
+- Auth: Bearer token (`Authorization: Bearer <token>`)
+- Storage avatar: Supabase Storage bucket `profile`
 
-### Architecture Features
-- **Cron Engine**: Dynamic registration of jobs on startup using `node-cron`.
-- **Retry Mechanism**: Exponential backoff strategy for failed webhook deliveries.
-- **Security**: Global `x-api-key` header protection for all REST endpoints using NestJS Guards.
-- **Logging**: Comprehensive database logging of all successes and failures per task.
+## Repository Structure
 
-## Database Schema (Prisma)
-- **`tasks`**: Stores task definition, cron schedule, Discord webhook URL, and JSON payload.
-- **`task_logs`**: Stores execution history, statuses (`success`/`failed`), retry counts, and error messages.
-
-## API Endpoints (Protected via `x-api-key`)
-- `POST /tasks` - Create task
-- `GET /tasks` - List all tasks
-- `GET /tasks/:id` - Get specific task
-- `PUT /tasks/:id` - Edit task (name, schedule, payload, max retries, status)
-- `DELETE /tasks/:id` - Delete task and its logs (cascade)
-- `GET /tasks/:id/logs` - View execution history for a task
-- `GET /dashboard` - Get overall metrics (total, active, failed)
-
----
-
-## How to Run Locally (Development)
-
-1. Clone and install dependencies:
-```bash
-cd backend && npm install
-cd ../frontend && npm install
+```text
+taskpulse/
+├── be/                 # NestJS backend API + scheduler
+├── fe/                 # Next.js frontend app
+├── .env.example        # Contoh env backend minimum
+├── docker-compose.yml  # Compose file (perlu review path jika dipakai)
+└── README.md
 ```
 
-2. Set up environment config:
-Configure your `.env` in `backend/` and `.env.local` in `frontend/` (see `.env.example`). Note the project is configured to use Supabase via connection pooling.
+## Fitur Utama
 
-3. Run Prisma Migrations (Backend):
+- Auth: register, login, profile session (`/auth/me`), change password
+- Tasks CRUD dengan validasi cron dan preview human-readable di FE
+- Scheduler otomatis untuk task status `active`
+- Retry webhook gagal dengan exponential backoff (`1s, 2s, 4s, ...`)
+- Task execution logs per task
+- Dashboard summary metrik task
+- User profile/settings/notifications
+- Upload avatar user ke Supabase Storage
+- UI modern: sidebar collapse/hover, mode card/table, create/edit via modal
+
+## Tech Stack Detail
+
+### Frontend
+- Next.js 16 (App Router)
+- React 19
+- TypeScript 5
+- Tailwind CSS 4
+- Base UI + shadcn-style component system
+- TanStack Query
+- Axios
+- Recharts
+- Sonner
+
+### Backend
+- NestJS 11
+- Prisma 5
+- PostgreSQL
+- node-cron
+- class-validator + class-transformer
+- Supabase JS (storage upload)
+
+## Quick Start (Recommended)
+
+### 1) Backend
+
 ```bash
-cd backend
+cd be
+npm install
+cp ../.env.example .env
+```
+
+Isi `.env` backend sesuai environment Anda (lihat detail di [be/README.md](be/README.md)).
+
+Lanjutkan setup database:
+
+```bash
 npx prisma generate
 npx prisma migrate dev
+npm run start:dev
 ```
 
-4. Start the Application:
-```bash
-# Terminal 1 - Start Backend (PORT 4000)
-cd backend && npm run start:dev
+Backend default: `http://localhost:4000/api`
 
-# Terminal 2 - Start Frontend (PORT 3000)
-cd frontend && npm run dev
+### 2) Frontend
+
+```bash
+cd fe
+npm install
+echo 'NEXT_PUBLIC_API_URL=http://localhost:4000/api' > .env.local
+npm run dev
 ```
 
----
+Frontend default: `http://localhost:3000`
 
-## How to Run with Docker
+## Environment Variables (High-Level)
 
-The entire stack is containerized for production readiness using multi-stage builds.
+### Backend (`be/.env`)
 
-1. Ensure Docker Desktop is running.
-2. Build and start services:
+| Variable | Required | Keterangan |
+|---|---|---|
+| `DATABASE_URL` | Yes | Koneksi utama PostgreSQL (Prisma) |
+| `DIRECT_URL` | Yes | Koneksi direct untuk migrasi Prisma |
+| `JWT_SECRET` | Yes | Secret signing token auth |
+| `PORT` | No | Default `4000` |
+| `DISCORD_TIMEOUT` | No | Timeout webhook dalam ms, default `10000` |
+| `SUPABASE_URL` | Optional | Wajib jika fitur upload avatar diaktifkan |
+| `SUPABASE_SERVICE_ROLE_KEY` | Optional | Wajib jika fitur upload avatar diaktifkan |
+
+### Frontend (`fe/.env.local`)
+
+| Variable | Required | Keterangan |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | Yes | Base URL backend API |
+
+## Security Notes
+
+- Seluruh endpoint selain auth publik diproteksi guard bearer token.
+- Simpan kredensial `.env` di secret manager, **jangan commit ke git**.
+- Jika ada secret/keys yang sempat terekspos, lakukan rotasi key segera.
+
+## Testing
+
+Backend:
+
 ```bash
-docker-compose up --build -d
-```
-3. Access the dashboard: `http://localhost:3000`
-4. Access the API: `http://localhost:4000/api`
-
-*(Note: The docker-compose provisions a local PostgreSQL container automatically so you don't need a live Supabase connection for testing the docker flow).*
-
----
-
-## How to Run Unit Tests
-
-The backend includes comprehensive Jest test suites covering CRUD, Scheduler Engine execution/retries, and API Guards.
-
-```bash
-cd backend
+cd be
 npm run test
+npm run test:cov
 ```
-The test suite will mock Axios for safe Discord interactions.
 
----
+Frontend lint:
 
-## AI CLI Development Workflow
-
-This project was built using AI CLI tools to accelerate development. Here are 3 examples of how AI was used:
-
-### 1. Planning Database Schema
-**Command:**
 ```bash
-claude "Plan a Prisma schema for a task scheduler with webhook payloads and execution logs using UUIDs and enums."
+cd fe
+npm run lint
 ```
-**Output Outcome:**
-Generated normalized `tasks` and `task_logs` models with a Cascade delete relation and proper database column mappings (`@map("snake_case")`). 
 
-### 2. Generating Unit Tests for Retry Logic
-**Command:**
-```bash
-gemini "Generate Jest unit tests for a SchedulerService that tests exponential backoff retry logic and mocks Axios POST requests."
-```
-**Output Outcome:**
-Created `scheduler.service.spec.ts` testing successful webhook deliveries, failed deliveries tracking retry counts, and exhausted retry scenarios using `jest.mock('axios')`.
+## Deployment Notes
 
-### 3. Planning API Endpoints
-**Command:**
-```bash
-claude "Design RESTful API endpoints for the Discord task manager app and create a NestJS controller."
-```
-**Output Outcome:**
-Generated standard CRUD endpoints, a `/tasks/:id/logs` relationship endpoint, and a dashboard summary endpoint protected by a custom `ApiKeyGuard` class.
+- FE siap untuk deployment Next.js (contoh Netlify/Vercel).
+- BE dapat deploy ke Railway (lihat [be/railway.json](be/railway.json)).
+- Untuk production:
+	- gunakan `prisma migrate deploy`
+	- aktifkan TLS DB
+	- gunakan secret manager
+	- harden CORS origin
+
+## Dokumentasi Modul
+
+- Backend detail: [be/README.md](be/README.md)
+- Frontend detail: [fe/README.md](fe/README.md)

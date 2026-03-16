@@ -4,7 +4,7 @@ import * as cron from 'node-cron';
 import axios from 'axios';
 import { Task } from '@prisma/client';
 import { TasksService } from '../tasks/tasks.service';
-import { LogsService } from '../logs/logs.service';
+import { LogsService } from '../logs';
 
 /**
  * Scheduler engine that manages cron jobs for all active tasks.

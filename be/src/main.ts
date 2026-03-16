@@ -6,10 +6,27 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
+
+  const defaultAllowedOrigins = [
+    'http://localhost:3000',
+    'http://frontend:3000',
+    'https://taskpluseglory-fe.netlify.app',
+  ];
+
+  const configuredOrigins = configService
+    .get<string>('CORS_ORIGINS')
+    ?.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  const allowedOrigins = configuredOrigins?.length
+    ? configuredOrigins
+    : defaultAllowedOrigins;
 
   // Enable CORS for frontend
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://frontend:3000'],
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
   });
@@ -27,7 +44,6 @@ async function bootstrap() {
   // Global API prefix
   app.setGlobalPrefix('api');
 
-  const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') || 4000;
 
   await app.listen(port, '0.0.0.0');

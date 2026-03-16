@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { LogsService } from '../logs/logs.service';
+import { LogsService } from '../logs';
 
 /**
  * Dashboard service providing aggregated metrics.

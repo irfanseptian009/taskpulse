@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { SchedulerService } from './scheduler.service';
 import { TasksService } from '../tasks/tasks.service';
-import { LogsService } from '../logs/logs.service';
+import { LogsService } from '../logs';
 import axios from 'axios';
 
 jest.mock('axios');

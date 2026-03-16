@@ -1,36 +1,148 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TaskPulse Frontend (Next.js)
 
-## Getting Started
+Frontend web app untuk TaskPulse yang menyediakan dashboard task scheduler, autentikasi user, task management, log viewer, profile/settings/notifications, serta upload avatar.
 
-First, run the development server:
+## Tech Stack
+
+- Next.js 16 (App Router)
+- React 19 + TypeScript
+- Tailwind CSS 4
+- Base UI + shadcn-style components
+- TanStack Query
+- Axios
+- Recharts
+- Sonner
+
+## Fitur UI
+
+- Login & Register flow
+- Route protection via middleware (redirect ke login jika belum auth)
+- Dashboard metrik task dengan visual chart
+- Task Management:
+	- Create task via modal
+	- Edit task via modal
+	- View mode card/table
+	- Cron preset/manual + cron preview
+- Task logs viewer
+- Profile page (termasuk upload avatar)
+- Settings page
+- Notifications page
+- Responsive sidebar + header + dark/light theme
+
+## Struktur Folder (Ringkas)
+
+```text
+src/
+├── app/
+│   ├── login/
+│   ├── register/
+│   ├── profile/
+│   ├── settings/
+│   ├── notifications/
+│   ├── tasks/
+│   └── page.tsx
+├── components/
+│   ├── layout/
+│   ├── ui/
+│   └── task-form.tsx
+├── context/
+├── lib/
+│   ├── api.ts
+│   ├── api-client.ts
+│   └── auth.ts
+├── types/
+└── middleware.ts
+```
+
+## Menjalankan Lokal
+
+### 1) Install
+
+```bash
+npm install
+```
+
+### 2) Environment
+
+Buat file `.env.local` di folder `fe/`:
+
+```dotenv
+NEXT_PUBLIC_API_URL=http://localhost:4000/api
+```
+
+### 3) Jalankan
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App URL: `http://localhost:3000`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## NPM Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Script | Fungsi |
+|---|---|
+| `npm run dev` | Run local development |
+| `npm run build` | Build production |
+| `npm run start` | Start production build |
+| `npm run lint` | Lint code |
 
-## Learn More
+## Integrasi API
 
-To learn more about Next.js, take a look at the following resources:
+Client API terpusat di [src/lib/api-client.ts](src/lib/api-client.ts):
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Inject bearer token ke header `Authorization`
+- Auto-handle `401`:
+	- hapus token local
+	- redirect ke `/login`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Mapping endpoint API ada di [src/lib/api.ts](src/lib/api.ts):
 
-## Deploy on Vercel
+- `authApi`
+- `tasksApi`
+- `dashboardApi`
+- `userApi`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Authentication Flow (Frontend)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Token disimpan di:
+	- `localStorage` (`taskpulse_token`)
+	- cookie (`taskpulse_token`) untuk middleware check
+- Middleware [src/middleware.ts](src/middleware.ts):
+	- user tanpa token diarahkan ke `/login`
+	- user bertoken tidak bisa akses `/login` atau `/register`
+
+## UX Notes
+
+- Task form mendukung 2 mode schedule:
+	- `preset` (dropdown)
+	- `manual` (input cron string)
+- Create/Edit task menggunakan modal agar workflow lebih cepat.
+- List task memiliki dua tampilan:
+	- Card (visual)
+	- Table (compact)
+
+## Build & Deploy
+
+- Next.js build standard:
+
+```bash
+npm run build
+npm run start
+```
+
+- Netlify config tersedia di root: [../netlify.toml](../netlify.toml)
+
+## Troubleshooting Cepat
+
+### Tidak bisa login / selalu redirect login
+- Pastikan backend jalan di URL yang sama dengan `NEXT_PUBLIC_API_URL`
+- Cek cookie `taskpulse_token`
+- Cek response `401` di browser devtools
+
+### Data tidak muncul
+- Pastikan backend API base URL benar
+- Cek network request ke endpoint `/api/*`
+
+### Upload avatar gagal
+- Cek backend env `SUPABASE_URL` dan `SUPABASE_SERVICE_ROLE_KEY`
