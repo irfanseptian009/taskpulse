@@ -27,6 +27,10 @@ export const authApi = {
     const { data } = await apiClient.get<AuthUser>('/auth/me');
     return data;
   },
+  changePassword: async (payload: { currentPassword: string; newPassword: string }): Promise<{ success: boolean }> => {
+    const { data } = await apiClient.patch<{ success: boolean }>('/auth/password', payload);
+    return data;
+  },
 };
 
 export const dashboardApi = {

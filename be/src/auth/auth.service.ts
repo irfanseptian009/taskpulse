@@ -13,7 +13,7 @@ import {
   scryptSync,
   timingSafeEqual,
 } from 'crypto';
-import { LoginDto, RegisterDto } from './dto';
+import { ChangePasswordDto, LoginDto, RegisterDto } from './dto';
 
 type AuthUser = {
   id: string;
@@ -94,6 +94,30 @@ export class AuthService {
       token,
       user: this.toPublicUser(user),
     };
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    const users = await this.readUsers();
+    const userIndex = users.findIndex((item) => item.id === userId);
+
+    if (userIndex === -1) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const user = users[userIndex];
+    const validCurrentPassword = this.verifyPassword(dto.currentPassword, user.passwordHash);
+
+    if (!validCurrentPassword) {
+      throw new UnauthorizedException('Invalid current password');
+    }
+
+    const newPasswordHash = this.hashPassword(dto.newPassword);
+    
+    // Update the user array and write it back
+    users[userIndex].passwordHash = newPasswordHash;
+    await this.writeUsers(users);
+
+    return { success: true };
   }
 
   verifyToken(token: string): JwtPayload {

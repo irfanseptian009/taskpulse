@@ -2,12 +2,12 @@
 
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { userApi } from '@/lib/api';
+import { authApi, userApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Camera, User } from 'lucide-react';
+import { Camera, User, KeyRound, Lock, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ProfilePage() {
@@ -27,6 +27,40 @@ export default function ProfilePage() {
     },
     onError: () => toast.error('Failed to update profile'),
   });
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const passwordMutation = useMutation({
+    mutationFn: authApi.changePassword,
+    onSuccess: () => {
+      toast.success('Password changed successfully');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Failed to change password';
+      toast.error(message);
+    },
+  });
+
+  const handleChangePassword = () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error('Please fill in all password fields');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters');
+      return;
+    }
+    passwordMutation.mutate({ currentPassword, newPassword });
+  };
 
   const uploadAvatar = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -122,6 +156,70 @@ export default function ProfilePage() {
           >
             <Camera className="mr-2 h-4 w-4" />
             Save Profile
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <KeyRound className="h-5 w-5" />
+            Change Password
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="currentPassword">Current Password</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="currentPassword"
+                type="password"
+                className="pl-9"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Enter current password"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="newPassword">New Password</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="newPassword"
+                type="password"
+                className="pl-9"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password (min. 6 characters)"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm New Password</Label>
+            <div className="relative">
+              <CheckCircle2 className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="confirmPassword"
+                type="password"
+                className="pl-9"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm your new password"
+              />
+            </div>
+          </div>
+
+          <Button
+            onClick={handleChangePassword}
+            disabled={passwordMutation.isPending}
+            className="w-full sm:w-auto"
+          >
+            <KeyRound className="mr-2 h-4 w-4" />
+            {passwordMutation.isPending ? 'Updating...' : 'Update Password'}
           </Button>
         </CardContent>
       </Card>

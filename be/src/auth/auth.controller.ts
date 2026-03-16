@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto } from './dto';
+import { ChangePasswordDto, LoginDto, RegisterDto } from './dto';
 import { ApiKeyGuard } from './api-key.guard';
 
 @Controller('auth')
@@ -21,5 +21,11 @@ export class AuthController {
   @UseGuards(ApiKeyGuard)
   me(@Req() req: any) {
     return this.authService.me(req.user?.sub);
+  }
+
+  @Patch('password')
+  @UseGuards(ApiKeyGuard)
+  changePassword(@Req() req: any, @Body() dto: ChangePasswordDto) {
+    return this.authService.changePassword(req.user?.sub, dto);
   }
 }
