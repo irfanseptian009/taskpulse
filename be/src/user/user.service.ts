@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
+import { AuthService } from '../auth/auth.service';
 import { UpdateProfileDto, UpdateSettingsDto } from './dto';
 
 type JwtUser = {
@@ -48,7 +49,10 @@ export class UserService {
   private readonly bucketName = 'profile';
   private readonly supabase: SupabaseClient | null;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly authService: AuthService,
+  ) {
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
     const supabaseServiceRoleKey = this.configService.get<string>(
       'SUPABASE_SERVICE_ROLE_KEY',
@@ -79,6 +83,13 @@ export class UserService {
   async updateProfile(jwtUser: JwtUser, dto: UpdateProfileDto) {
     const state = await this.readState();
     const userRecord = this.getUserRecord(state, jwtUser);
+
+    // Sync with auth system before applying locally. Throws if email taken.
+    if (dto.email || dto.displayName) {
+      const newEmail = dto.email ?? jwtUser.email;
+      const newName = dto.displayName ?? jwtUser.name;
+      await this.authService.updateEmailAndName(jwtUser.sub, newEmail, newName);
+    }
 
     userRecord.profile = {
       ...userRecord.profile,

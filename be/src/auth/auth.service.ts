@@ -120,6 +120,31 @@ export class AuthService {
     return { success: true };
   }
 
+  async updateEmailAndName(userId: string, email: string, name: string) {
+    const users = await this.readUsers();
+    const userIndex = users.findIndex((item) => item.id === userId);
+
+    if (userIndex === -1) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const newEmail = email.toLowerCase();
+    
+    // Check for email collision if the email is actually changing
+    if (users[userIndex].email !== newEmail) {
+      const emailExists = users.some((user) => user.email === newEmail && user.id !== userId);
+      if (emailExists) {
+        throw new ConflictException('Email already registered');
+      }
+    }
+
+    users[userIndex].email = newEmail;
+    users[userIndex].name = name;
+    
+    await this.writeUsers(users);
+    return { success: true };
+  }
+
   verifyToken(token: string): JwtPayload {
     const [encodedPayload, signature] = token.split('.');
     if (!encodedPayload || !signature) {
