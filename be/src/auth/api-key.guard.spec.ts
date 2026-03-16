@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { ApiKeyGuard } from './api-key.guard';
+import { AuthService } from './auth.service';
 
 /**
  * Unit tests for API Key authentication guard.
@@ -9,48 +9,53 @@ import { ApiKeyGuard } from './api-key.guard';
 describe('ApiKeyGuard', () => {
   let guard: ApiKeyGuard;
 
-  const mockConfigService = {
-    get: jest.fn().mockReturnValue('test-api-key'),
+  const mockAuthService = {
+    verifyToken: jest.fn().mockReturnValue({
+      sub: 'user-id',
+      email: 'user@mail.com',
+      name: 'User',
+    }),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ApiKeyGuard,
-        { provide: ConfigService, useValue: mockConfigService },
+        { provide: AuthService, useValue: mockAuthService },
       ],
     }).compile();
 
     guard = module.get<ApiKeyGuard>(ApiKeyGuard);
   });
 
-  const createMockContext = (apiKey?: string): ExecutionContext => {
+  const createMockContext = (authorization?: string): ExecutionContext => {
     return {
       switchToHttp: () => ({
         getRequest: () => ({
-          headers: apiKey ? { 'x-api-key': apiKey } : {},
+          headers: authorization ? { authorization } : {},
         }),
       }),
     } as ExecutionContext;
   };
 
-  it('should allow request with valid API key', () => {
-    const context = createMockContext('test-api-key');
+  it('should allow request with valid bearer token', () => {
+    const context = createMockContext('Bearer test-token');
     expect(guard.canActivate(context)).toBe(true);
+    expect(mockAuthService.verifyToken).toHaveBeenCalledWith('test-token');
   });
 
-  it('should reject request with invalid API key', () => {
-    const context = createMockContext('wrong-key');
+  it('should reject request with invalid authorization type', () => {
+    const context = createMockContext('Basic abcdef');
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
-  it('should reject request without API key header', () => {
+  it('should reject request without authorization header', () => {
     const context = createMockContext();
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
-  it('should reject request with empty API key', () => {
-    const context = createMockContext('');
+  it('should reject request with empty bearer token', () => {
+    const context = createMockContext('Bearer ');
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 });

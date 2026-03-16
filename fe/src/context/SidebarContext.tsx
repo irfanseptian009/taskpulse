@@ -16,23 +16,25 @@ interface SidebarContextType {
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export const SidebarProvider = ({ children }: { children: ReactNode }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Close mobile sidebar on larger screens automatically
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 1024 && isMobileOpen) {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+
+      if (!mobile && isMobileOpen) {
         setIsMobileOpen(false);
       }
     };
 
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [isMobileOpen]);
-
-  // Persist expanded state on large screens if desired (omitted for simplicity but can be added)
 
   const toggleSidebar = () => setIsExpanded(!isExpanded);
   const toggleMobileSidebar = () => setIsMobileOpen(!isMobileOpen);
@@ -40,7 +42,7 @@ export const SidebarProvider = ({ children }: { children: ReactNode }) => {
   return (
     <SidebarContext.Provider
       value={{
-        isExpanded,
+        isExpanded: isMobile ? false : isExpanded,
         setIsExpanded,
         isMobileOpen,
         setIsMobileOpen,

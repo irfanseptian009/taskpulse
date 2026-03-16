@@ -1,5 +1,5 @@
-import TaskForm from '@/components/task-form';
+import { redirect } from 'next/navigation';
 
 export default function NewTaskPage() {
-  return <TaskForm />;
+  redirect('/tasks?create=1');
 }

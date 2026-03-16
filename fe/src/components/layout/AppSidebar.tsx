@@ -36,7 +36,7 @@ const navItems: NavItem[] = [
     name: "Tasks",
     subItems: [
       { name: "All Tasks", path: "/tasks" },
-      { name: "Create New Task", path: "/tasks/new" },
+      { name: "Create New Task", path: "/tasks?create=1" },
     ],
   },
 ];
@@ -62,6 +62,7 @@ const othersItems: NavItem[] = [
 export const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered, toggleMobileSidebar } = useSidebar();
   const pathname = usePathname();
+  const shouldExpand = isExpanded || isHovered || isMobileOpen;
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
@@ -70,7 +71,7 @@ export const AppSidebar: React.FC = () => {
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const isActive = useCallback((path: string) => path === pathname, [pathname]);
+  const isActive = useCallback((path: string) => path.split('?')[0] === pathname, [pathname]);
 
   useEffect(() => {
     let submenuMatched = false;
@@ -128,13 +129,13 @@ export const AppSidebar: React.FC = () => {
           {nav.subItems ? (
             <button
               onClick={() => handleSubmenuToggle(index, menuType)}
-              className={`flex items-center rounded-xl px-1.5 py-3 w-full text-sm transition-all duration-200
+              className={`flex w-full items-center rounded-lg px-1 py-2.5 text-sm transition-all duration-200
                 ${
                   openSubmenu?.type === menuType && openSubmenu?.index === index
-                    ? "bg-white/50 font-medium text-black dark:text-blue-300 dark:bg-gray-800/60 shadow-sm"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/10"
+                    ? "bg-black/10 font-medium text-gray-900 dark:bg-gray-800/60 dark:text-white"
+                    : "text-gray-800 hover:bg-gray-800/10 dark:text-gray-300 dark:hover:bg-gray-200/20"
                 }
-                ${!isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-between px-3"}
+                ${!isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-between"}
               `}
             >
               <div className="flex items-center gap-3">
@@ -142,16 +143,16 @@ export const AppSidebar: React.FC = () => {
                   className={`flex items-center justify-center w-6 h-6 ${
                     openSubmenu?.type === menuType && openSubmenu?.index === index
                       ? "text-gray-900 dark:text-white"
-                      : "text-primary/70 dark:text-blue-300"
+                      : "text-orange-800 dark:text-blue-300"
                   }`}
                 >
                   {nav.icon}
                 </span>
-                {(isExpanded || isHovered || isMobileOpen) && (
+                {shouldExpand && (
                   <span className="font-medium whitespace-nowrap">{nav.name}</span>
                 )}
               </div>
-              {(isExpanded || isHovered || isMobileOpen) && (
+              {shouldExpand && (
                 <ChevronDown
                   className={`w-4 h-4 transition-transform duration-300 ${
                     openSubmenu?.type === menuType && openSubmenu?.index === index
@@ -166,13 +167,13 @@ export const AppSidebar: React.FC = () => {
               <Link
                 href={nav.path!}
                 onClick={() => isMobileOpen && toggleMobileSidebar()}
-                className={`flex items-center rounded-xl px-1.5 py-3 w-full text-sm transition-all duration-200 relative group
+                className={`group relative flex w-full items-center rounded-lg px-1 py-2.5 text-sm transition-all duration-200
                   ${
                     isActive(nav.path)
-                      ? "bg-black/10 font-medium text-gray-800 dark:bg-gray-800/80 dark:text-white shadow-sm"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/10"
+                      ? "bg-black/10 font-medium text-gray-900 dark:bg-gray-800/60 dark:text-white"
+                      : "text-gray-800 hover:bg-gray-800/10 dark:text-gray-300 dark:hover:bg-gray-200/20"
                   }
-                  ${!isExpanded && !isHovered ? "lg:justify-center" : "px-3"}
+                  ${!isExpanded && !isHovered ? "lg:justify-center" : ""}
                 `}
               >
                 <div className="flex items-center gap-3">
@@ -186,7 +187,7 @@ export const AppSidebar: React.FC = () => {
                   >
                     {nav.icon}
                   </span>
-                  {(isExpanded || isHovered || isMobileOpen) && (
+                  {shouldExpand && (
                     <span className="font-medium whitespace-nowrap">
                       {nav.name}
                     </span>
@@ -194,7 +195,7 @@ export const AppSidebar: React.FC = () => {
                 </div>
                 
                 {/* Tooltip for collapsed state */}
-                {!isExpanded && !isHovered && !isMobileOpen && (
+                {!shouldExpand && (
                   <div className="absolute left-14 rounded-md px-2 py-1 ml-2 bg-popover text-popover-foreground text-xs opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all z-50 whitespace-nowrap shadow-md border">
                     {nav.name}
                   </div>
@@ -202,7 +203,7 @@ export const AppSidebar: React.FC = () => {
               </Link>
             )
           )}
-          {nav.subItems && (isExpanded || isHovered || isMobileOpen) && (
+          {nav.subItems && shouldExpand && (
             <div
               ref={(el) => {
                 subMenuRefs.current[`${menuType}-${index}`] = el;
@@ -215,17 +216,17 @@ export const AppSidebar: React.FC = () => {
                     : "0px",
               }}
             >
-              <ul className="mt-2 space-y-1.5 pl-9 pr-2">
+              <ul className="mt-1 space-y-1 pl-9 pr-2">
                 {nav.subItems.map((subItem) => (
                   <li key={subItem.name}>
                     <Link
                       href={subItem.path}
                       onClick={() => isMobileOpen && toggleMobileSidebar()}
-                      className={`flex items-center rounded-lg px-3 py-2.5 text-sm transition-all duration-200 w-full text-left relative
+                      className={`relative flex w-full items-center rounded-md px-3 py-2 text-left text-sm transition-all duration-200
                         ${
                           isActive(subItem.path)
-                            ? "bg-primary/10 font-medium text-primary dark:bg-white/10 dark:text-white shadow-sm"
-                            : "text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200"
+                            ? "bg-blue-500/10 font-medium text-gray-900 dark:bg-gray-100/10 dark:text-white"
+                            : "text-gray-700 hover:bg-white/30 dark:text-gray-300 dark:hover:bg-gray-600/30"
                         }
                       `}
                     >
@@ -245,61 +246,57 @@ export const AppSidebar: React.FC = () => {
 
   return (
     <>
-      {/* Mobile Backdrop */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-gray-900/50 lg:hidden"
           onClick={toggleMobileSidebar}
         />
       )}
 
-      {/* Sidebar - Matching connectiviz styles precisely */}
       <aside 
-        className={`fixed mt-16 lg:mt-4 top-0 left-0 lg:left-4 rounded-3xl h-[calc(100vh-2rem)] z-50
-          bg-cyan-50/80 dark:bg-gray-900/90 border border-blue-700/10 dark:border-gray-800
-          transition-all duration-300 ease-in-out shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.1)] backdrop-blur-xl
-          ${isExpanded || isMobileOpen ? "w-[17.5rem]" : isHovered ? "w-[17.5rem]" : "w-16"}
+        className={`fixed left-0 top-0 z-50 mt-16 h-screen rounded-3xl border-2 border-blue-700/10 bg-cyan-100 shadow-lg transition-all duration-300 ease-in-out dark:border-gray-700 dark:bg-gray-900
+          lg:left-4 lg:mt-2
+          ${isExpanded || isMobileOpen ? "w-72" : isHovered ? "w-72" : "w-20"}
           ${isMobileOpen ? "translate-x-0" : "-translate-x-[110%] sm:-translate-x-[90%]"}
-          lg:translate-x-0 overflow-hidden flex flex-col`}
+          lg:translate-x-0`}
         onMouseEnter={() => !isExpanded && setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div className={`py-6 m-2 flex ${!isExpanded && !isHovered ? "justify-center" : "px-6"}`}>
+        <div className={`m-2 mt-3 flex py-5 ${!isExpanded && !isHovered ? "justify-center" : "px-4"}`}>
           <Link 
             href="/"
-            className="flex items-center gap-3 transition-opacity duration-200 hover:opacity-80"
+            onClick={() => isMobileOpen && toggleMobileSidebar()}
+            className="flex items-center gap-3 transition-all duration-200 hover:opacity-80"
           >
-            <div className={`flex items-center justify-center rounded-xl bg-gradient-to-br from-primary to-blue-600 text-white font-bold shadow-lg shadow-primary/30 transition-all duration-300 ${isExpanded || isHovered || isMobileOpen ? "w-10 h-10 text-lg" : "w-10 h-10 text-lg"}`}>
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-primary to-blue-600 text-base font-bold text-white shadow-lg shadow-primary/20">
               TP
             </div>
-            {(isExpanded || isHovered || isMobileOpen) && (
-              <span className="text-xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight ml-1 animate-in fade-in duration-300">
+            {shouldExpand && (
+              <span className="ml-1 text-xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
                 TaskPulse
               </span>
             )}
           </Link>
         </div>
 
-        <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden px-3 pb-6 custom-scrollbar">
-          <nav className="mb-6 rounded-2xl bg-white/60 shadow-sm border border-slate-100 dark:border-slate-800 dark:bg-gray-950/50 py-4 px-2.5 transition-colors">
+        <div className="flex h-[calc(100vh-7rem)] flex-col overflow-y-auto px-1 py-4 no-scrollbar">
+          <nav className="mx-2 mb-6 rounded-lg border-2 border-slate-100 bg-white/70 px-3 py-3 shadow-xl dark:border-slate-700 dark:bg-gray-800">
             <div>
               <h2
-                className={`text-xs font-bold uppercase tracking-widest 
-                  text-blue-900/60 dark:text-gray-500/80 mb-3 
+                className={`mb-3 text-xs font-semibold uppercase tracking-wider text-blue-900 dark:text-gray-500
                   ${!isExpanded && !isHovered ? "text-center" : "px-3"}`}
               >
-                {isExpanded || isHovered || isMobileOpen ? "Main Menu" : "••"}
+                {shouldExpand ? "Menu" : "•••"}
               </h2>
               {renderMenuItems(navItems, "main")}
             </div>
 
-            <div className="mt-8">
+            <div>
               <h2
-                className={`text-xs font-bold uppercase tracking-widest
-                  text-blue-900/60 dark:text-gray-500/80 mb-3 
+                className={`mb-4 mt-4 text-xs font-semibold uppercase tracking-wider text-blue-900/60 dark:text-gray-500
                   ${!isExpanded && !isHovered ? "text-center" : "px-3"}`}
               >
-                {isExpanded || isHovered || isMobileOpen ? "System" : "••"}
+                {shouldExpand ? "Others" : "•••"}
               </h2>
               {renderMenuItems(othersItems, "others")}
             </div>

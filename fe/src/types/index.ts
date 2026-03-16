@@ -28,3 +28,36 @@ export interface DashboardSummary {
   active_tasks: number;
   failed_tasks: number;
 }
+
+export interface UserProfile {
+  id: string;
+  displayName: string;
+  email: string;
+  avatarUrl: string | null;
+}
+
+export interface UserSettings {
+  theme: 'light' | 'dark' | 'system';
+  emailNotifications: boolean;
+  inAppNotifications: boolean;
+}
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: AuthUser;
+}

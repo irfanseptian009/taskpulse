@@ -1,0 +1,32 @@
+{
+  "users": {
+    "b632f4e7-c4b2-4e30-a33a-9ee871c92c11": {
+      "profile": {
+        "displayName": "user1",
+        "email": "user1@mail.com",
+        "avatarUrl": "https://brwtzdfrvqctyhmgmhzl.supabase.co/storage/v1/object/public/profile/uploads/avatar-1773699318818-2771481.png"
+      },
+      "settings": {
+        "theme": "system",
+        "emailNotifications": true,
+        "inAppNotifications": true
+      },
+      "notifications": [
+        {
+          "id": "notif-1773699320032-1",
+          "title": "Welcome to TaskPulse",
+          "message": "Your dashboard is ready. Start by creating your first task.",
+          "read": false,
+          "createdAt": "2026-03-16T22:15:20.032Z"
+        },
+        {
+          "id": "notif-1773699320032-2",
+          "title": "Tip",
+          "message": "Use cron preview in task form to validate your schedule.",
+          "read": false,
+          "createdAt": "2026-03-16T19:15:20.032Z"
+        }
+      ]
+    }
+  }
+}

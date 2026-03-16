@@ -4,24 +4,31 @@ import {
   ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { AuthService } from './auth.service';
 
 /**
- * API Key authentication guard.
- * Validates the `x-api-key` header against the configured API_KEY.
+ * Authentication guard.
+ * Validates `Authorization: Bearer <token>` JWT token.
  */
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly authService: AuthService) {}
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
-    const apiKey = request.headers['x-api-key'];
-    const validKey = this.configService.get<string>('API_KEY');
+    const authorization = request.headers['authorization'] as string | undefined;
 
-    if (!apiKey || apiKey !== validKey) {
-      throw new UnauthorizedException('Invalid or missing API key');
+    if (!authorization || !authorization.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing Bearer token');
     }
+
+    const token = authorization.slice(7).trim();
+    if (!token) {
+      throw new UnauthorizedException('Missing Bearer token');
+    }
+
+    const payload = this.authService.verifyToken(token);
+    request.user = payload;
 
     return true;
   }

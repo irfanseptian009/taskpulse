@@ -5,16 +5,17 @@ import { useSidebar } from "@/context/SidebarContext";
 import { Header } from "./Header";
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
-  const { isExpanded } = useSidebar();
+  const { isExpanded, isHovered } = useSidebar();
+  const shouldUseExpandedSpacing = isExpanded || isHovered;
   
   return (
     <div 
       className={`flex flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out
-        ${isExpanded ? "lg:pl-[19.5rem]" : "lg:pl-[6.5rem]"}
+        ${shouldUseExpandedSpacing ? "lg:pl-80" : "lg:pl-28"}
       `}
     >
       <Header />
-      <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 no-scrollbar bg-card/30 rounded-tl-[2rem] border-t border-l border-border/40 shadow-[inset_0_4px_24px_rgba(0,0,0,0.02)] mt-2 ml-0">
+      <main className="mt-2 flex-1 overflow-y-auto rounded-tl-4xl border-l border-t border-border/40 bg-card/30 p-4 shadow-[inset_0_4px_24px_rgba(0,0,0,0.02)] no-scrollbar md:p-6 lg:mx-6 lg:p-8">
         <div className="mx-auto max-w-7xl h-full">
           {children}
         </div>
