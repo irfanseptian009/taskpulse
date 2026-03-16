@@ -131,7 +131,14 @@ npm run build
 npm run start
 ```
 
-- Netlify config tersedia di root: [../netlify.toml](../netlify.toml)
+- Netlify (monorepo) yang direkomendasikan:
+	- Base directory: `fe`
+	- Build command: `npm run build`
+	- Publish directory: *(kosongkan / jangan diisi)*
+	- Node version: `20`
+- Konfigurasi tersedia di:
+	- [../netlify.toml](../netlify.toml) (root monorepo)
+	- [netlify.toml](netlify.toml) (jika source langsung ke folder fe)
 
 ## Troubleshooting Cepat
 
