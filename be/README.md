@@ -153,8 +153,23 @@ Semua endpoint menggunakan prefix `/api`.
 
 Konfigurasi Railway tersedia di [railway.json](railway.json):
 
-- Build: `npm run build`
-- Start: `npx prisma generate && npx prisma migrate deploy && npm run start:prod`
+- Build: `npx prisma generate && npm run build`
+- Start: `sh -c 'npx prisma migrate deploy || echo "[WARN] prisma migrate deploy failed, continuing startup"; npm run start:prod'`
+
+### Railway Setting yang benar
+
+- Root Directory: `be` (**tanpa** leading slash `/`)
+- Branch: `main`
+- Gunakan config dari `be/railway.json`
+
+### Catatan penting Railway Variables
+
+- Jangan set `PORT` manual di Railway. Biarkan Railway menginjeksi `PORT` otomatis.
+- Minimal wajib:
+  - `DATABASE_URL`
+  - `JWT_SECRET`
+- Untuk migrasi yang stabil (recommended):
+  - `DIRECT_URL`
 
 ## Operasional & Security Checklist
 
