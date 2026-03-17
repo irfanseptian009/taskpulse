@@ -1,9 +1,11 @@
-FROM node:20-alpine AS builder
+FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
 
-# Install dependencies needed for node-gyp
-RUN apk add --no-cache python3 make g++
+# Install dependencies needed for node-gyp and Prisma engine
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends python3 make g++ openssl ca-certificates \
+	&& rm -rf /var/lib/apt/lists/*
 
 # Copy package files
 COPY package*.json ./
@@ -20,9 +22,14 @@ RUN npx prisma generate
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine
+FROM node:20-bookworm-slim
 
 WORKDIR /app
+
+# Runtime deps for Prisma query engine
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends openssl ca-certificates \
+	&& rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
