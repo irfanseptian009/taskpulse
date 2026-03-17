@@ -21,14 +21,42 @@ async function bootstrap() {
     .map((origin) => origin.trim())
     .filter(Boolean);
 
-  const allowedOrigins = configuredOrigins?.length
-    ? configuredOrigins
-    : defaultAllowedOrigins;
+  const allowedOrigins = Array.from(
+    new Set([...(defaultAllowedOrigins ?? []), ...(configuredOrigins ?? [])]),
+  );
+
+  const normalizeOrigin = (origin: string) => origin.replace(/\/$/, '');
+
+  const isAllowedOrigin = (origin?: string) => {
+    if (!origin) return true;
+
+    const normalized = normalizeOrigin(origin);
+    const byList = allowedOrigins.some(
+      (item) => normalizeOrigin(item) === normalized,
+    );
+
+    if (byList) return true;
+
+    // Allow all Netlify preview/production domains if needed
+    if (/^https:\/\/[a-z0-9-]+\.netlify\.app$/i.test(normalized)) {
+      return true;
+    }
+
+    return false;
+  };
 
   // Enable CORS for frontend
   app.enableCors({
-    origin: allowedOrigins,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS blocked for origin: ${origin}`), false);
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
 
