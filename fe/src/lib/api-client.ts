@@ -1,7 +1,11 @@
 import axios from 'axios';
 import { authStorage } from './auth';
 
-const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const DEFAULT_DEV_API_URL = 'http://localhost:4000/api';
+const DEFAULT_PROD_API_URL = 'https://taskpulse-production-d71e.up.railway.app/api';
+
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL
+  || (process.env.NODE_ENV === 'production' ? DEFAULT_PROD_API_URL : DEFAULT_DEV_API_URL);
 
 /**
  * Axios instance configured with JWT bearer authentication.

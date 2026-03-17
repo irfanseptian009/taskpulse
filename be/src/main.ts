@@ -11,6 +11,7 @@ async function bootstrap() {
   const defaultAllowedOrigins = [
     'http://localhost:3000',
     'http://frontend:3000',
+    'https://taskpluseglory.netlify.app',
     'https://taskpluseglory-fe.netlify.app',
   ];
 
