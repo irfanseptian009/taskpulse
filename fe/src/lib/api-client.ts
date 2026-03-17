@@ -2,9 +2,22 @@ import axios from 'axios';
 import { authStorage } from './auth';
 
 const DEFAULT_DEV_API_URL = 'http://localhost:4000/api';
-const DEFAULT_PROD_API_URL = 'https://taskpulse-production-d71e.up.railway.app/api';
+const DEFAULT_PROD_API_URL = 'https://taskpulse-production-60fb.up.railway.app/api';
 
-const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL
+const normalizeApiUrl = (value?: string): string | undefined => {
+  if (!value) return undefined;
+
+  const trimmed = value.trim().replace(/\/+$/, '');
+  if (!trimmed) return undefined;
+
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/')) {
+    return trimmed;
+  }
+
+  return `https://${trimmed}`;
+};
+
+const NEXT_PUBLIC_API_URL = normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL)
   || (process.env.NODE_ENV === 'production' ? DEFAULT_PROD_API_URL : DEFAULT_DEV_API_URL);
 
 /**
