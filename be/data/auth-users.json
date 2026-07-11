@@ -12,5 +12,12 @@
     "email": "user2@mail.com",
     "passwordHash": "00320c7f5e6287bdd754fcf64c3ecaa9:7ca14c8040dd009bc4dcde89e891cb210c67ed10ee23574969b56f28f2171e1847bb0ecd9ca1c3ac31502d67ecece229977c3b2d2994954163512e1367f62746",
     "createdAt": "2026-03-16T22:45:42.526Z"
+  },
+  {
+    "id": "5c856cc2-ad3a-4495-833f-9e163c23598c",
+    "name": "user3",
+    "email": "user3@mail.com",
+    "passwordHash": "e8d9894600083067542d8ad846666349:35e16683b3e5835716d2e99ccd5b784f858f718730fd614d32fb8fee8e0634c6d886d9a18bd255d645d1b4fb7489989641b47f9e936afea0f73fed9ea61767fa",
+    "createdAt": "2026-03-26T03:59:34.658Z"
   }
 ]

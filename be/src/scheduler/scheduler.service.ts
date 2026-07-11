@@ -14,7 +14,10 @@ import { LogsService } from '../logs';
 export class SchedulerService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(SchedulerService.name);
   private readonly jobs = new Map<string, cron.ScheduledTask>();
+  private readonly jobSchedules = new Map<string, string>();
   private readonly discordTimeout: number;
+  private readonly syncIntervalMs: number;
+  private syncTimer?: NodeJS.Timeout;
 
   constructor(
     private readonly tasksService: TasksService,
@@ -22,6 +25,7 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     private readonly configService: ConfigService,
   ) {
     this.discordTimeout = this.configService.get<number>('DISCORD_TIMEOUT') || 10000;
+    this.syncIntervalMs = this.configService.get<number>('SCHEDULER_SYNC_INTERVAL') || 30000;
   }
 
   /**
@@ -30,12 +34,11 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     this.logger.log('Initializing scheduler engine...');
     try {
-      const activeTasks = await this.tasksService.findActive();
-      this.logger.log(`Found ${activeTasks.length} active task(s) to schedule`);
+      await this.syncJobsWithDatabase();
 
-      for (const task of activeTasks) {
-        this.registerJob(task);
-      }
+      this.syncTimer = setInterval(() => {
+        void this.syncJobsWithDatabase();
+      }, this.syncIntervalMs);
 
       this.logger.log('Scheduler engine initialized successfully');
     } catch (error) {
@@ -48,11 +51,18 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
    */
   onModuleDestroy() {
     this.logger.log('Shutting down scheduler engine...');
+
+    if (this.syncTimer) {
+      clearInterval(this.syncTimer);
+      this.syncTimer = undefined;
+    }
+
     for (const [taskId, job] of this.jobs) {
       job.stop();
       this.logger.log(`Stopped job for task: ${taskId}`);
     }
     this.jobs.clear();
+    this.jobSchedules.clear();
   }
 
   /**
@@ -72,6 +82,7 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     });
 
     this.jobs.set(task.id, job);
+    this.jobSchedules.set(task.id, task.schedule);
     this.logger.log(`Registered cron job for task "${task.name}" [${task.schedule}]`);
   }
 
@@ -83,7 +94,36 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     if (existingJob) {
       existingJob.stop();
       this.jobs.delete(taskId);
+      this.jobSchedules.delete(taskId);
       this.logger.log(`Removed cron job for task: ${taskId}`);
+    }
+  }
+
+  /**
+   * Sync scheduler jobs with active tasks in database so runtime CRUD changes
+   * (create/update/delete/pause) are reflected without restarting the backend.
+   */
+  private async syncJobsWithDatabase(): Promise<void> {
+    const activeTasks = await this.tasksService.findActive();
+    this.logger.log(`Found ${activeTasks.length} active task(s) to schedule`);
+
+    const activeTaskIds = new Set(activeTasks.map((task) => task.id));
+
+    // Register missing jobs and refresh jobs with updated schedule
+    for (const task of activeTasks) {
+      const currentJob = this.jobs.get(task.id);
+      const currentSchedule = this.jobSchedules.get(task.id);
+
+      if (!currentJob || currentSchedule !== task.schedule) {
+        this.registerJob(task);
+      }
+    }
+
+    // Remove jobs for tasks that are no longer active/existing
+    for (const taskId of this.jobs.keys()) {
+      if (!activeTaskIds.has(taskId)) {
+        this.removeJob(taskId);
+      }
     }
   }
 

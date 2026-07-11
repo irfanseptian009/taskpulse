@@ -27,6 +27,32 @@
           "createdAt": "2026-03-16T19:15:20.032Z"
         }
       ]
+    },
+    "5c856cc2-ad3a-4495-833f-9e163c23598c": {
+      "profile": {
+        "displayName": "user3",
+        "email": "user3@mail.com",
+        "avatarUrl": "https://brwtzdfrvqctyhmgmhzl.supabase.co/storage/v1/object/public/profile/uploads/avatar-1774499833835-63281977.png"
+      },
+      "settings": {
+        "theme": "light"
+      },
+      "notifications": [
+        {
+          "id": "notif-1774499834956-1",
+          "title": "Welcome to TaskPulse",
+          "message": "Your dashboard is ready. Start by creating your first task.",
+          "read": false,
+          "createdAt": "2026-03-26T04:37:14.956Z"
+        },
+        {
+          "id": "notif-1774499834956-2",
+          "title": "Tip",
+          "message": "Use cron preview in task form to validate your schedule.",
+          "read": false,
+          "createdAt": "2026-03-26T01:37:14.956Z"
+        }
+      ]
     }
   }
 }
